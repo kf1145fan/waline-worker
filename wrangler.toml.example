@@ -1,0 +1,18 @@
+#:schema node_modules/wrangler/config-schema.json
+
+# your cloudflare worker name; create an empty/hello-world worker
+# from cloudflare dashboard
+name = "waline-on-worker"
+main = "src/index.ts"
+compatibility_date = "2026-06-03" # could be current-date
+
+# Environment Variables (Public configurations)
+[vars]
+# Optional: Restrict CORS access to specific domains (comma-separated, no http://)
+# SECURE_DOMAINS = "yourdomain.com,localhost:3000"
+
+# Cloudflare D1 Database Binding
+[[d1_databases]]
+binding = "DB" # Do not change this binding name
+database_name = "YOUR_DATABASE_NAME"
+database_id = "YOUR_CLOUDFLARE_D1_DATABASE_ID"

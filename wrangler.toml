@@ -1,0 +1,17 @@
+#:schema node_modules/wrangler/config-schema.json
+
+name = "waline-on-worker"
+main = "src/index.ts"
+compatibility_date = "2026-06-03"
+
+[vars]
+# Restrict CORS access to specific domains (comma-separated, no http://)
+SECURE_DOMAINS = "902786.xyz"
+SITE_NAME = "Waline Comment"
+SITE_URL = "https://902786.xyz"
+
+# Cloudflare D1 Database Binding
+[[d1_databases]]
+binding = "DB"
+database_name = "waline-db"
+database_id = "e6b67701-0896-46ce-b5a3-8ad9fff2ab4f"
