@@ -1,18 +1,21 @@
 #:schema node_modules/wrangler/config-schema.json
 
-# your cloudflare worker name; create an empty/hello-world worker
-# from cloudflare dashboard
+# Your Cloudflare Worker name; keep unique across your account
 name = "waline-on-worker"
 main = "src/index.ts"
 compatibility_date = "2026-06-03" # could be current-date
 
 # Environment Variables (Public configurations)
+# Both are OPTIONAL. If left commented, CORS allows all origins and SITE_URL is unset.
+# They can be injected at deploy time via GitHub Secrets: SECURE_DOMAINS, SITE_URL
 [vars]
-# Optional: Restrict CORS access to specific domains (comma-separated, no http://)
 # SECURE_DOMAINS = "yourdomain.com,localhost:3000"
+# SITE_URL = "https://comment.yourdomain.com"
 
 # Cloudflare D1 Database Binding
+# Create your own D1 database (npx wrangler d1 create waline-db) and put its ID
+# into the D1_DATABASE_ID GitHub secret, or replace the placeholder below.
 [[d1_databases]]
 binding = "DB" # Do not change this binding name
-database_name = "YOUR_DATABASE_NAME"
+database_name = "waline-db"
 database_id = "YOUR_CLOUDFLARE_D1_DATABASE_ID"

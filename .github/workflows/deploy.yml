@@ -22,6 +22,30 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # Required secrets:
+      #   CLOUDFLARE_API_TOKEN  - Cloudflare API token (Workers + D1 permissions)
+      #   CLOUDFLARE_ACCOUNT_ID - Cloudflare account ID
+      #   D1_DATABASE_ID        - your D1 database ID (create via: npx wrangler d1 create waline-db)
+      #   JWT_SECRET            - long random string; keep unchanged or all logins reset
+      # Optional secrets:
+      #   SECURE_DOMAINS        - comma-separated allowed CORS origins, e.g. "example.com"
+      #   SITE_URL              - your site URL, e.g. "https://comment.example.com"
+      - name: Generate wrangler.toml from example
+        env:
+          D1_DATABASE_ID: ${{ secrets.D1_DATABASE_ID }}
+          SECURE_DOMAINS: ${{ secrets.SECURE_DOMAINS }}
+          SITE_URL: ${{ secrets.SITE_URL }}
+        run: |
+          test -n "$D1_DATABASE_ID" || { echo "::error::Missing secret D1_DATABASE_ID"; exit 1; }
+          sed "s/YOUR_CLOUDFLARE_D1_DATABASE_ID/${D1_DATABASE_ID}/" wrangler.toml.example > wrangler.toml
+          if [ -n "$SECURE_DOMAINS" ]; then
+            sed -i "s|^# SECURE_DOMAINS = .*|SECURE_DOMAINS = \"${SECURE_DOMAINS}\"|" wrangler.toml
+          fi
+          if [ -n "$SITE_URL" ]; then
+            sed -i "s|^# SITE_URL = .*|SITE_URL = \"${SITE_URL}\"|" wrangler.toml
+          fi
+          cat wrangler.toml
+
       - name: Set JWT_SECRET secret
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
