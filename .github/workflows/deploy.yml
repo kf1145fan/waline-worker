@@ -39,11 +39,15 @@ jobs:
             CREATE_OUT=$(npx wrangler d1 create waline-db 2>&1 || true)
             D1_DATABASE_ID=$(echo "$CREATE_OUT" | grep -oP 'database_id\s*=\s*"\K[^"]+' | head -1)
             if [ -z "$D1_DATABASE_ID" ]; then
+              echo "Database waline-db may already exist, looking up its ID..."
+              D1_DATABASE_ID=$(npx wrangler d1 list --json 2>/dev/null | python3 -c "import sys,json; dbs=json.load(sys.stdin); print(next((d['uuid'] for d in dbs if d['name']=='waline-db'), ''))")
+            fi
+            if [ -z "$D1_DATABASE_ID" ]; then
               echo "$CREATE_OUT"
-              echo "::error::Could not create D1 database. Make sure your API token has D1 edit permission, or add a D1_DATABASE_ID secret with an existing database ID."
+              echo "::error::Could not create or find D1 database. Make sure your API token has D1 edit permission, or add a D1_DATABASE_ID secret with an existing database ID."
               exit 1
             fi
-            echo "D1 database created: $D1_DATABASE_ID"
+            echo "D1 database ready: $D1_DATABASE_ID"
           fi
           sed "s/YOUR_CLOUDFLARE_D1_DATABASE_ID/${D1_DATABASE_ID}/" wrangler.toml.example > wrangler.toml
           if [ -n "$SECURE_DOMAINS" ]; then
