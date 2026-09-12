@@ -59,4 +59,6 @@ export interface UserInfo {
 
 export interface Variables {
 	userInfo?: UserInfo;
+	/** Effective CORS allowlist (env SECURE_DOMAINS merged with UI-managed secure_domains setting) */
+	secureDomainsResolved?: string;
 }

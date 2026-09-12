@@ -20,6 +20,7 @@ const ALLOWED_KEYS = new Set([
 	"llm_api_key",
 	"llm_model",
 	"llm_prompt",
+	"secure_domains",
 ]);
 
 /**
@@ -58,6 +59,9 @@ settingsRoutes.get("/", async (c) => {
 		errmsg: "",
 		data: settings,
 		env_overrides: getEnvOverrides(c.env),
+		// Current value of the SECURE_DOMAINS env var, if any. The UI shows it
+		// because it is merged with (not overridden by) the secure_domains setting.
+		env_secure_domains: c.env.SECURE_DOMAINS || "",
 	});
 });
 

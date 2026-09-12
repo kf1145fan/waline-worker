@@ -12,23 +12,39 @@ import { userRoutes } from "./router/user.js";
 import { getAdminPage } from "./ui/admin-panel.js";
 import { getCustomSettingsPage } from "./ui/custom-admin.js";
 import { getWalinePage } from "./ui/waline-page.js";
+import { getSetting } from "./router/settings.js";
+import { originAllowed } from "./utils/cors.js";
 
 const app = new Hono<{ Bindings: Env; Variables: Variables }>();
+
+// Resolve the effective CORS allowlist on every request.
+// The env variable SECURE_DOMAINS and the UI-managed `secure_domains` setting (D1) are merged,
+// so domains added in the /ui/worker-setting page always take effect even if the env var is set.
+app.use("*", async (c, next) => {
+	const parts: string[] = [];
+	if (c.env.SECURE_DOMAINS) parts.push(c.env.SECURE_DOMAINS);
+	try {
+		const uiSetting = await getSetting(c.env.DB, "secure_domains");
+		if (uiSetting) parts.push(uiSetting);
+	} catch (err) {
+		// wl_Settings may not exist yet (fresh DB) — env-only allowlist still works.
+		console.error(
+			"[CORS] failed to read secure_domains setting:",
+			err instanceof Error ? err.message : String(err),
+		);
+	}
+	c.set("secureDomainsResolved", parts.join(","));
+	await next();
+});
 
 // CORS
 app.use(
 	"*",
 	cors({
 		origin: (origin, c) => {
-			const secureDomains = c.env.SECURE_DOMAINS;
-			if (!secureDomains) return origin;
-			const allowed = secureDomains.split(",").map((d: string) => d.trim());
-			if (
-				allowed.some((d: string) => origin === d || origin.endsWith(`.${d}`))
-			) {
-				return origin;
-			}
-			return "";
+			const allowlist = c.get("secureDomainsResolved");
+			if (!allowlist) return origin;
+			return originAllowed(origin, allowlist) ? origin : "";
 		},
 		allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
 		allowHeaders: ["Content-Type", "Authorization"],

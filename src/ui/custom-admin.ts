@@ -162,6 +162,11 @@ window.__I18N = {
     llmError: '错误: {msg}',
     envOverride: '此设置被环境变量 / wrangler secret 覆盖',
     akismetLink: '申请地址：',
+    tabDomains: '域名白名单',
+    secureDomainsLabel: '允许评论的域名（CORS 白名单）',
+    secureDomainsHint: '填写允许访问评论 API 的站点来源，多个用英文逗号分隔。可带可不带 <code>https://</code>，例如 <code>https://blog.example.com</code> 或 <code>blog.example.com</code>；留空表示不限制。保存后立即生效，无需重新部署。',
+    secureDomainsEnvNote: '当前环境变量 SECURE_DOMAINS 里还有（会与上方合并生效）：',
+    secureDomainsEnvNoteEmpty: '未设置环境变量 SECURE_DOMAINS',
   },
   en: {
     title: 'Worker Settings',
@@ -216,6 +221,11 @@ window.__I18N = {
     llmError: 'Error: {msg}',
     envOverride: 'Overridden by environment variable / wrangler secret',
     akismetLink: 'Get a key at ',
+    tabDomains: 'Allowed Domains',
+    secureDomainsLabel: 'Allowed Domains (CORS Whitelist)',
+    secureDomainsHint: 'Origins allowed to access the comment API, comma-separated. The <code>https://</code> scheme is optional (e.g. <code>https://blog.example.com</code> or <code>blog.example.com</code>). Leave empty to allow all origins. Takes effect immediately after saving.',
+    secureDomainsEnvNote: 'The SECURE_DOMAINS env var currently also contains (merged with the value above): ',
+    secureDomainsEnvNoteEmpty: 'No SECURE_DOMAINS env var is set',
   }
 };
 </script>
@@ -247,6 +257,7 @@ window.__I18N = {
   <div class="tabs" id="tabs">
     <button class="tab-btn active" data-tab="frontend" data-i18n="tabFrontend">Frontend Versions</button>
     <button class="tab-btn" data-tab="comment" data-i18n="tabComment">Comment Policy</button>
+    <button class="tab-btn" data-tab="domains" data-i18n="tabDomains">Allowed Domains</button>
   </div>
 
   <div class="tab-panel active" id="tab-frontend">
@@ -353,6 +364,15 @@ window.__I18N = {
       <div style="margin-top:12px">
         <button class="btn btn-secondary btn-xs" id="test-btn" data-i18n="testBtn">Test LLM Connection</button>
       </div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="tab-domains">
+    <div class="field">
+      <label class="field-label" data-i18n="secureDomainsLabel">Allowed Domains (CORS Whitelist)</label>
+      <textarea id="set-secure-domains" rows="3" placeholder="https://blog.example.com,blog.example.com"></textarea>
+      <p class="field-hint" data-i18n-html="secureDomainsHint">Origins allowed to access the comment API, comma-separated.</p>
+      <p class="field-hint" id="secure-domains-env-note" style="color:#f97316"></p>
     </div>
   </div>
 
@@ -479,6 +499,7 @@ window.__I18N = {
     document.getElementById('set-llm-key').value = s.llm_api_key || '';
     document.getElementById('set-llm-model').value = s.llm_model || 'gpt-4o-mini';
     document.getElementById('set-llm-prompt').value = s.llm_prompt || 'You are a review bot. Output a single word: approved or spam.';
+    document.getElementById('set-secure-domains').value = s.secure_domains || '';
   }
 
   // Reselect dropdowns after versions are loaded (called from fetchVersions success callback)
@@ -564,6 +585,14 @@ window.__I18N = {
       // Now that SETTINGS_DATA is populated, fetch versions (will reselect on complete)
       fetchVersions('@waline/client', 'refresh-versions', 'version-select', t('versionsRefreshed'));
       fetchVersions('@waline/admin', 'refresh-admin-versions', 'admin-version-select', t('adminVersionsRefreshed'));
+
+      // Show the current SECURE_DOMAINS env var (it is merged with the UI value)
+      var envNote = document.getElementById('secure-domains-env-note');
+      if (envNote) {
+        envNote.textContent = sr.env_secure_domains
+          ? t('secureDomainsEnvNote') + ' ' + sr.env_secure_domains
+          : t('secureDomainsEnvNoteEmpty');
+      }
     }).catch(function(){ toast(t('loadFailed'), false); });
 
     document.getElementById('save-btn').addEventListener('click', function() {
@@ -580,6 +609,7 @@ window.__I18N = {
         llm_api_key: document.getElementById('set-llm-key').value.trim(),
         llm_model: document.getElementById('set-llm-model').value.trim(),
         llm_prompt: document.getElementById('set-llm-prompt').value.trim(),
+        secure_domains: document.getElementById('set-secure-domains').value.trim(),
       };
       api('/settings', { method: 'PUT', body: JSON.stringify(settings) }).then(function(r) {
         toast(r.errno ? (r.errmsg || t('saveFailed')) : t('saveOk'), !r.errno);
