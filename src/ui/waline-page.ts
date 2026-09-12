@@ -27,6 +27,7 @@ export function getWalinePage(): string {
       path: params.get('path') || '/',
       lang: params.get('lng') || undefined,
       serverURL: location.protocol + '//' + location.host + location.pathname.replace(/\\/+$/, ''),
+      dark: 'auto',
       recaptchaV3Key: '',
       turnstileKey: '',
     });
