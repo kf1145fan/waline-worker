@@ -824,13 +824,18 @@ async function formatComment(
 		status: row.status,
 		like: row.like ?? 0,
 		url: row.url,
-		pid: row.pid,
-		rid: row.rid,
 		sticky: Boolean(row.sticky),
 		user_id: row.user_id,
 		type: user?.type || (row.user_id ? "guest" : ""),
 		label: user?.label || "",
 	};
+
+	// Only include pid/rid when they exist. The Waline v3 client decides whether a
+	// comment is a reply via `'rid' in comment`; returning a literal `rid: null`
+	// makes it treat a root comment as a reply, fail to find the parent, and skip
+	// inserting it into the list (comment only appears after a page refresh).
+	if (row.pid) result.pid = row.pid;
+	if (row.rid) result.rid = row.rid;
 
 	if (isAdmin) {
 		result.mail = mail;

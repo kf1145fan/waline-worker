@@ -252,6 +252,12 @@ describe("POST /api/comment — create comment", () => {
 			url: "/page",
 			sticky: expect.any(Boolean),
 		});
+		// Waline v3 client uses `'rid' in comment` to distinguish replies from
+		// root comments. A literal `rid: null` makes it treat a root comment as
+		// a reply and skip inserting it into the list. Root comments must not
+		// include pid/rid keys (matches the official Waline server).
+		expect(data).not.toHaveProperty("pid");
+		expect(data).not.toHaveProperty("rid");
 	});
 
 	it("authenticated user post uses their display_name", async () => {
